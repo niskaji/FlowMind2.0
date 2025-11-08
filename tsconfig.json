@@ -1,0 +1,22 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "jsx": "react-jsx",
+    "types": ["react", "react-native"],
+    "baseUrl": ".", // 🔹 alias'ların kökü burası
+    "moduleResolution": "bundler", // 🔹 modül çözümleme mantığı
+    "paths": {
+      "@/*": ["./src/*"] // 🔹 artık "@/..." yolları çözülür
+    }
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts",
+    "global.d.ts",
+    "src",
+    "app"
+  ]
+}

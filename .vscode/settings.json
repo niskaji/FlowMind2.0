@@ -1,0 +1,59 @@
+{
+  // 🌈 Genel Düzenleme Ayarları
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "editor.detectIndentation": false,
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+
+  // 💾 Kaydederken otomatik biçimlendirme
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "explicit",
+    "source.organizeImports": "explicit"
+  },
+
+  // ✨ Prettier Kuralları
+  "prettier.singleQuote": true,
+  "prettier.trailingComma": "all",
+  "prettier.tabWidth": 2,
+  "prettier.printWidth": 100,
+  "prettier.semi": true,
+  "prettier.arrowParens": "avoid",
+  "prettier.jsxSingleQuote": false,
+  "prettier.useTabs": false,
+
+  // 🚨 ESLint Entegrasyonu
+  "eslint.validate": ["typescript", "typescriptreact", "javascript", "javascriptreact"],
+  "eslint.alwaysShowStatus": true,
+  "[javascript]": {
+    "editor.formatOnSave": false
+  },
+
+  // 🧩 Görsel & Tema
+  "workbench.colorTheme": "One Dark Pro",
+  "workbench.iconTheme": "material-icon-theme",
+  "editor.bracketPairColorization.enabled": true,
+  "editor.guides.bracketPairs": "active",
+  "editor.renderWhitespace": "all",
+
+  // 🪄 Otomatik Import / Path Desteği
+  "typescript.preferences.importModuleSpecifier": "relative",
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "path-intellisense.mappings": {
+    "@": "${workspaceFolder}/src"
+  },
+
+  // 💡 Ekstra Kullanışlı Seçenekler
+  "editor.minimap.enabled": false,
+  "explorer.confirmDelete": false,
+  "explorer.confirmDragAndDrop": false,
+  "window.zoomLevel": 0,
+  "terminal.integrated.defaultProfile.osx": "zsh",
+
+  // 📦 Kaynak Kontrol
+  "git.enableSmartCommit": true,
+  "git.autofetch": true,
+  "git.confirmSync": false
+}
