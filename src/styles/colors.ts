@@ -25,7 +25,7 @@ export const Colors = {
   // 🌳 Vurgu renkleri
   lightGreen: '#B6BE93',
   oliveSoft: '#A7B57B',
-  accent: '#A7B57B', // 💚 sekme aktif rengi
+  accent: '#A7B57B', // 💚 sekmenin aktif rengi
 
   // 🌚 Gölge ve kontrast
   shadowDark: 'rgba(0,0,0,0.25)',
@@ -34,3 +34,4 @@ export const Colors = {
   // ⚪ Nötr renkler
   white: '#FFFFFF',
 } as const;
+// test commit kontrol satırı
