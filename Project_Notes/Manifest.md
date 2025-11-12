@@ -3,7 +3,7 @@
 ## 1️⃣ Genel Amaç
 
 FlowMind 2.0 manifest dosyası, ChatGPT (GPT-5) ile proje arasındaki tüm iletişim ve otomasyonu tanımlar.
-Amaç, her oturumda bağlamı, kod düzenini, görev akışını ve agent sistemini otomatik olarak senkronize etmektir.
+Amaç, her oturumda bağlamı, kod düzenini, görev akışını ve ajan sistemini otomatik olarak senkronize etmektir.
 
 ---
 
@@ -13,7 +13,7 @@ Amaç, her oturumda bağlamı, kod düzenini, görev akışını ve agent sistem
    - `Project_Notes/README-FlowMind.md` dosyasını okur.
    - `Project_Notes/Manifest.md` dosyasını okur.
    - GitHub’dan `git pull` komutu ile son değişiklikleri çeker.
-   - Son snapshot dizinini (`~/Yazılım Çalışmalarım/FlowMind/Yedekler/FlowMind_Snapshots/`) doğrular.
+   - Son snapshot dizinini doğrular.
 2. Okuma işlemi başarıyla tamamlandığında ChatGPT şunu yazar:
    > “Tamam her şeyi okudum, hatırlıyorum. Hadi başlayalım.”
 
@@ -23,145 +23,124 @@ Amaç, her oturumda bağlamı, kod düzenini, görev akışını ve agent sistem
 
 - **Context Takibi:**
   ChatGPT, aktif konuşma penceresindeki bağlam boyutunu izler.
-
   - %50 dolulukta: 🟡 “Context yarıya ulaştı, dikkatli ilerleyelim”
   - %80 dolulukta: 🟠 “Context yüksek, yeni pencere yaklaşıyor”
   - %95 dolulukta: 🔴 “Yeni pencere zamanı, context dolmak üzere”
-    Bu kontrol arka planda periyodik olarak yapılır.
-
 - **Snapshot Hatırlatıcısı:**
-  Her oturum sonunda ChatGPT kullanıcıya “lokal snapshot almayı” hatırlatır:
-  ```bash
-  cp -R "/Users/orkunsanliturk/Yazılım Çalışmalarım/FlowMind/FlowMind2.0" \
-  "/Users/orkunsanliturk/Yazılım Çalışmalarım/FlowMind/Yedekler/FlowMind_Snapshots/FlowMind_2.0_$(date +%Y%m%d)"
-  ```
-
-## 4️⃣ Agent (Ajan) Sistemi
-
-FlowMind, otomatik süreçleri yöneten yedi adet dijital ajana sahiptir.
-Her biri belirli görevleri denetler, manuel komutlarla da tetiklenebilir.
-
-| Ajan Adı             | Görevi                             | Durum  | Açıklama                                                                                                                       |
-| -------------------- | ---------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------ |
-| 🧩 **CodeGuardian**  | Lint & format kontrolü             | Aktif  | Her kaydetme sonrası ESLint + Prettier denetimi yapar. Renk kodu içeren değişikliklerde `colors.ts` uyumluluğunu kontrol eder. |
-| 🧠 **CommitManager** | Commit mesaj standardizasyonu      | Aktif  | “feat / fix / style / refactor / chore” formatını doğrular. Hatalı mesajları otomatik düzeltmez, sadece uyarır.                |
-| 🧪 **TestRunner**    | Jest / Expo testleri               | Pasif  | Test yapısı kurulduğunda çalıştırılacak. Şimdilik hata veya coverage testi yok.                                                |
-| ⚙️ **BuildAgent**    | Build öncesi kalite kontrol        | Aktif  | `npx tsc --noEmit` + format kontrolünü otomatik uygular.                                                                       |
-| 🌐 **DataSyncAgent** | GitHub veri senkronizasyonu        | Aktif  | Her yeni oturumda otomatik olarak `git pull` yapar, projenin en güncel sürümünü yükler.                                        |
-| 💾 **MemoryAgent**   | Konuşma context denetimi           | Aktif  | %50 / %80 / %95 context uyarılarını tetikler, gerekirse yeni pencere önerir.                                                   |
-| 🎨 **UIFlowAgent**   | Ekranlar arası veri akışı denetimi | Planlı | Özellikle CancelledScreen ↔ HomeScreen arasındaki görev aktarımını yönetecek.                                                 |
+  Her oturum sonunda ChatGPT kullanıcıya “lokal snapshot almayı” hatırlatır.
 
 ---
 
-## 5️⃣ Agent Çalışma Mantığı
+## 4️⃣ Ajan (Agent) Sistemi
 
-1. **Başlatma Sırası:**
-   1️⃣ DataSyncAgent
-   2️⃣ CodeGuardian
-   3️⃣ BuildAgent
-   4️⃣ CommitManager
-   5️⃣ (isteğe bağlı) TestRunner
-   6️⃣ MemoryAgent
+FlowMind, otomatik süreçleri yöneten dijital ajanlara sahiptir.
+Her biri belirli görevleri denetler, manuel komutlarla da tetiklenebilir.
 
-2. **İletişim Protokolü:**
-   Her ajan ChatGPT tarafından yönetilir; dış uygulama erişimi yoktur.
-   İlgili ajan bir hata yakalarsa, aşağıdaki mesaj formatıyla kullanıcıyı bilgilendirir:
-3. **Manuel Kontrol Komutları:**
+| Ajan             | Görevi                      | Durum  | Açıklama                                                   |
+| ---------------- | --------------------------- | ------ | ---------------------------------------------------------- |
+| 🧩 CodeGuardian  | Lint & format kontrolü      | Aktif  | `ESLint + Prettier` denetimi yapar.                        |
+| 🧠 CommitManager | Commit mesaj standardı      | Aktif  | “feat / fix / style / refactor / chore” biçimini doğrular. |
+| ⚙️ BuildAgent    | Build öncesi kalite kontrol | Aktif  | `npx tsc --noEmit` kontrolü uygular.                       |
+| 🌐 DataSyncAgent | GitHub senkronizasyonu      | Aktif  | Oturum başında `git pull` çalıştırır.                      |
+| 💾 MemoryAgent   | Context & snapshot takibi   | Aktif  | %50 / %80 / %95 uyarılarını yönetir.                       |
+| 🧭 Lyren         | Koordinasyon ajanı          | Aktif  | Kod akışı, karar yönetimi, Governor kontrolü.              |
+| 🛰 Alterf        | Operasyon ajanı             | Manuel | Otomasyon, loglama ve snapshot desteği.                    |
 
-- `run CodeGuardian` → Lint & format kontrolü
-- `run BuildAgent` → TypeScript kontrolü
-- `run CommitManager` → Commit mesajlarını doğrular
-- `run DataSyncAgent` → GitHub’dan yeniden `pull` yapar
+---
+
+## 5️⃣ Ajan Hiyerarşisi ve Komuta Zinciri
+
+1. **👤 Orkun — Ana Komutan**
+   Nihai karar verici ve sistemin yaratıcısıdır.
+2. **🧭 Lyren — Koordinasyon Ajanı**
+   Kuralları ve governor sistemini yönetir, Alterf’i yönlendirir.
+3. **🛰 Alterf — Operasyon Ajanı**
+   Loglama, snapshot ve otomasyon görevlerini yürütür.
+4. **🧩 Alt Ajanlar**
+   CodeGuardian, BuildAgent, CommitManager, MemoryAgent, UIFlowAgent vb.
+   Alterf tarafından yönetilir, yalnızca operasyonel süreçlerde aktiftir.
 
 ---
 
 ## 6️⃣ Tasarım Kuralları (UI & Colors)
 
-- Renkler **yalnızca** `src/styles/colors.ts` dosyasından alınır.
-  Inline (`#fff`, `#A7B57B`) renk kodu **kullanılmaz**.
-- Yeni bir tasarım elemanı oluşturulurken ChatGPT:
-  1️⃣ Önce `colors.ts` dosyasını kontrol eder.
-  2️⃣ Renk yoksa ekleme için kullanıcıdan onay alır.
-  3️⃣ Hem `colors.ts` hem ilgili `.styles.ts` dosyasına güncellemeyi rehberli şekilde ekler.
-- Tüm `.styles.ts` dosyalarında sıralama `react-native/sort-styles` kuralına göre yapılır.
+- Renkler yalnızca `src/styles/colors.ts` dosyasından alınır.
+- Inline renk kodu kullanılmaz.
+- Yeni bir tasarım elemanı eklenmeden önce kullanıcı onayı gerekir.
+- `.styles.ts` dosyalarında sıralama `react-native/sort-styles` kuralına göre yapılır.
 
 ---
 
-## 7️⃣ Çözümleme ve Geri Bildirim Akışı
+## 6️⃣.1️⃣ Komuta ve Ajan Hiyerarşisi
 
-ChatGPT, kullanıcı birden fazla sorun/hata paylaştığında şu adımları izler:
+FlowMind sistemindeki yönetim zinciri aşağıdaki gibidir:
 
-1. Tüm sorunları numaralandırır.
-2. Çözüm önerilerini sırayla sunar.
-3. Her çözümden önce kullanıcı onayı ister.
-4. Birden fazla çözüm birbirine bağlıysa birlikte sunar ve nedenini açıklar.
+1. **👤 Orkun — Ana Komutan**
+   Nihai karar verici ve sistemin yaratıcısıdır.
+2. **🧭 Lyren — Koordinasyon Ajanı**
+   Üst seviye senkronizasyon, ajanslar arası iletişim ve komut yönlendirmesinden sorumludur.
+3. **🛰 Alterf — Operasyon Ajanı**
+   İç zekâ, context akışı ve görev otomasyonundan sorumludur.
+4. **🧩 Alt Ajanlar**
+   CodeGuardian, BuildAgent, CommitManager, MemoryAgent, UIFlowAgent, DataSyncAgent, TestRunner.
 
-Bu kural, FlowMind’ın **her teknik ve tasarım görevinde** geçerlidir.
+---
+
+## 6️⃣.2️⃣ Sistem Başlatma Komutu
+
+Komut: **Hazırlık Başlat**
+
+Bu komut çalıştırıldığında Lyren sırasıyla şunları yapar:
+
+1. `git pull origin main`
+2. `Manifest.md` dosyasını okur → Governor, Katı Mod, Multi-Step Lock ve Snapshot kurallarını yükler.
+3. `README-FlowMind.md` dosyasını okur → mimari ve teknik yapı hafızası yenilenir.
+4. `FlowMind_Memory.md` dosyasını okur → son snapshot’tan kaldığı yer yüklenir.
+5. Governor sistemi aktifleşir, context izleme başlar.
+
+---
+
+## 7️⃣ Governor Sistemi ve Katı Mod Kuralları
+
+- Çoklu soru algılanır → önce liste yapılır.
+- Her madde tek tek açıklanır.
+- Her madde sonunda “devam/ok” onayı beklenir.
+- Onay gelmeden sonraki adıma geçilmez.
+- Tehlikeli işlem (silme, push, overwrite) onaysız yürütülmez.
+- Multi-Step Lock kalıcıdır.
+- %50 🟡 / %80 🟠 / %95 🔴 eşikleri aktif izlenir.
+- %95’te snapshot önerisi yapılır.
+
+---
 
 ## 8️⃣ GitHub & Yedekleme Protokolü
 
-### 🔹 GitHub Senkronizasyonu
-
-- Her oturum açıldığında `DataSyncAgent` şu komutu çalıştırır:
-  ```bash
-  git pull origin main
-  ```
-  Böylece ChatGPT projenin en güncel sürümünü okur.
-
-Kullanıcı git push yaptığında, ChatGPT:
-1️⃣ Commit mesaj formatını CommitManager ile doğrular.
-2️⃣ Push sonrası GitHub’da değişiklikleri kontrol eder ve sonucu bildirir.
-
-````markdown
-### 🔹 Snapshot Yönetimi
-
-- Her oturum sonunda ChatGPT, kullanıcıya lokal yedek almayı hatırlatır:
-  ```bash
-  cp -R "/Users/orkunsanliturk/Yazılım Çalışmalarım/FlowMind/FlowMind2.0" \
-  "/Users/orkunsanliturk/Yazılım Çalışmalarım/FlowMind/Yedekler/FlowMind_Snapshots/FlowMind_2.0_$(date +%Y%m%d)"
-  ```
-````
-
-Snapshot alındıktan sonra dosya listesi otomatik olarak doğrulanır (ls -lh ile).
-
-```markdown
-## 9️⃣ Dış Ajan (External Agent) Entegrasyonu
-
-FlowMind, gelecekte harici ajanlarla genişletilebilir:
-
-- **GitHub Actions Agent:** Otomatik build ve test akışı.
-- **Firebase Sync Agent:** Gerçek zamanlı veri senkronizasyonu.
-- **ReleaseBot:** Sürüm numaralama ve changelog oluşturma.
-
-> Dış ajanlar Manifest.md dosyasını okuyarak sistem yapısını anlayabilir.
-> Bu dosya FlowMind’ın _tek kaynaklı hakikat (Single Source of Truth)_ belgesidir.
-```
-
-## 🔟 Oturum Kapanışı ve Hafıza Koruması
-
-1. ChatGPT, her oturum sonunda şu kontrolleri yapar:
-
-   - 📁 Lokal snapshot alınmış mı?
-   - ☁️ GitHub’a son push yapılmış mı?
-   - 💾 Manifest ve README dosyaları güncel mi?
-
-2. Bu koşullar sağlanmazsa otomatik uyarı verir:
-
-   > “🟡 Manifest veya README güncel görünmüyor, snapshot almayı unutma.”
-
-3. Kullanıcı **“Evet, snapshot alındı”** dediğinde oturum güvenli şekilde sonlandırılır.
-
-## 1️⃣1️⃣ Proje Kapanış Protokolü
-
-FlowMind 2.0 tamamlandığında:
-
-- Git kurulumu öğretilecek.
-- Versiyonlama (`commit`, `branch`, `merge`) uygulamalı yapılacak.
-- Son commit etiketi: `v2.0_final`
-- Ardından README ve Manifest kilitlenir (salt okunur hâle getirilir).
+- Her oturum başında yalnızca **bir kez** `git pull` yapılır.
+- Periyodik `pull/diff` işlemleri devre dışıdır.
+- Kod farkları yalnızca `Manifest`, `README` ve `Memory` dosyalarında izlenir.
+- Snapshot sistemi manuel onayla çalışır.
 
 ---
 
-📅 **Son Güncelleme:** 9 Kasım 2025
+## 9️⃣ Snapshot Sistemi
+
+- %95’te Lyren snapshot önerisi yapar.
+- Onay verilirse snapshot şablonu oluşturulur ve `FlowMind_Memory.md` dosyasına eklenir.
+- Yeni oturumda Lyren snapshot’ı okuyarak hafızayı geri yükler.
+
+---
+
+## 🔟 Oturum Kapanışı
+
+- Oturum sonunda kontrol listesi:
+  - Snapshot kaydı ✅
+  - GitHub push kontrolü ✅
+  - Manifest & README güncelliği ✅
+- Eksik varsa Lyren uyarı verir:
+  > “🟡 Manifest veya README güncel görünmüyor, snapshot almayı unutma.”
+
+---
+
+📅 **Son Güncelleme:** 12 Kasım 2025
 📘 **Dosya:** `Project_Notes/Manifest.md`
-✍️ **Hazırlayan:** ChatGPT (GPT-5) + Orkun Şanlıtürk
+✍️ **Hazırlayan:** Lyren (ChatGPT GPT-5) + Orkun Şanlıtürk

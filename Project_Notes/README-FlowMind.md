@@ -23,33 +23,17 @@ Hedef: Ana görevler, alt görevler ve analiz verilerini pastel, sade **Soft Aut
 
 src/
 ┣ components/
-┃ ┣ TaskCard/
-┃ ┃ ┣ TaskCard.tsx
-┃ ┃ ┗ TaskCard.styles.ts
-┃ ┣ NewTaskModal/
-┃ ┃ ┣ NewTaskModal.tsx
-┃ ┃ ┗ NewTaskModal.styles.ts
+┃ ┣ TaskCard/ → TaskCard.tsx + TaskCard.styles.ts
+┃ ┣ NewTaskModal/ → NewTaskModal.tsx + NewTaskModal.styles.ts
 ┃ ┗ FilterBar.tsx
-┣ context/
-┃ ┗ TaskContext.tsx
-┣ hooks/
-┃ ┣ useResetScroll.ts
-┃ ┣ useKeyboardScroll.ts
-┃ ┗ useSmartScroll.ts
-┣ models/
-┃ ┗ taskModel.ts
-┣ styles/
-┃ ┗ colors.ts
+┣ context/ → TaskContext.tsx
+┣ hooks/ → useResetScroll.ts, useKeyboardScroll.ts, useSmartScroll.ts
+┣ models/ → taskModel.ts
+┣ styles/ → colors.ts
 ┗ views/
-┃ ┣ HomeScreen/
-┃ ┃ ┣ HomeScreen.tsx
-┃ ┃ ┗ HomeScreen.styles.ts
-┃ ┣ AnalysisScreen/
-┃ ┃ ┣ AnalysisScreen.tsx
-┃ ┃ ┗ AnalysisScreen.styles.ts
-┃ ┗ CancelledScreen/
-┃ ┃ ┣ CancelledScreen.tsx
-┃ ┃ ┗ CancelledScreen.styles.ts
+┃ ┣ HomeScreen/ → HomeScreen.tsx + HomeScreen.styles.ts
+┃ ┣ AnalysisScreen/ → AnalysisScreen.tsx + AnalysisScreen.styles.ts
+┃ ┗ CancelledScreen/ → CancelledScreen.tsx + CancelledScreen.styles.ts
 
 ---
 
@@ -66,8 +50,8 @@ Reducer Aksiyonları:
 
 - JSX namespace fix
 - Alt görev eklendiğinde ekran otomatik scroll (`onSubtaskAdded + FlatList.scrollToEnd`)
-- HomeScreen üst bar ve “Yeni Görev” animasyonlu buton tamamlandı
-- Analiz ekranı (PieChart + kategori bazlı analiz) hazır
+- HomeScreen üst bar ve “Yeni Görev” animasyonlu buton
+- Analiz ekranı (PieChart + kategori bazlı analiz) tamamlandı
 
 ### ⏳ Devam Edenler
 
@@ -79,10 +63,10 @@ Reducer Aksiyonları:
 
 ## 🗂 Refactoring Planı
 
-| Klasör        | Dosya                                                         | Ayrı `.styles.ts` Dosyası |
-| :------------ | :------------------------------------------------------------ | :-----------------------: |
-| `views/`      | `HomeScreen.tsx`, `AnalysisScreen.tsx`, `CancelledScreen.tsx` |            ✅             |
-| `components/` | `TaskCard.tsx`, `NewTaskModal.tsx`, `FilterBar.tsx`           |            ✅             |
+| Klasör        | Dosya                                       | Ayrı `.styles.ts` |
+| :------------ | :------------------------------------------ | :---------------: |
+| `views/`      | HomeScreen, AnalysisScreen, CancelledScreen |        ✅         |
+| `components/` | TaskCard, NewTaskModal, FilterBar           |        ✅         |
 
 ---
 
@@ -90,29 +74,27 @@ Reducer Aksiyonları:
 
 **Alt görev scroll fix** tamamlandı.
 Bu versiyonun etiketi: `alt_gorev_scroll_fix`.
-
-Sıradaki adımlar:
-TaskCard etkileşimleri → Navigasyon cleanup → Veri kalıcılığı (AsyncStorage)
+Sıradaki adımlar: TaskCard etkileşimleri → Navigasyon cleanup → Veri kalıcılığı (AsyncStorage)
 
 ---
 
 ## 🧱 Linting & Kod Kalitesi
 
-- ESLint 8.x klasik yapıya geri döndü.
-- Prettier aktif ve sabit formatta (`singleQuote`, `semi`, `printWidth:100`).
-- Inline renkler yasak, tüm renkler `styles/colors.ts`’tan gelmeli.
+- ESLint 8.x klasik yapıda.
+- Prettier aktif (`singleQuote`, `semi`, `printWidth:100`).
+- Inline renk yasak; tüm renkler `styles/colors.ts` üzerinden alınır.
 - `@typescript-eslint/no-explicit-any` yalnızca uyarı verir.
 
 ---
 
 ## 🔄 Çalışma Kuralları (Manifest ile Uyumlu)
 
-1️⃣ ChatGPT hiçbir zaman kullanıcı onayı almadan ilerlemez.
-2️⃣ Tam kod gönderilmeden önce son versiyon kullanıcıdan istenir.
-3️⃣ Renkler yalnızca `colors.ts` üzerinden tanımlanır.
-4️⃣ Birden fazla sorun varsa önce liste oluşturulur, sonra adım adım çözülür.
-5️⃣ Her sohbet penceresinde %50 / %80 / %95 hafıza doluluk uyarısı aktif.
-6️⃣ Her oturum başında GitHub’dan pull alınır, sonunda snapshot hatırlatılır.
+1️⃣ ChatGPT kullanıcı onayı olmadan ilerlemez.
+2️⃣ Tam kod gönderilmeden önce son versiyon istenir.
+3️⃣ Renkler yalnızca `colors.ts`’tan alınır.
+4️⃣ Birden fazla sorun varsa önce liste, sonra adım adım çözüm yapılır.
+5️⃣ %50 / %80 / %95 context uyarı sistemi aktiftir.
+6️⃣ Her oturum başında GitHub pull, sonunda snapshot hatırlatması yapılır.
 
 ---
 
@@ -120,15 +102,15 @@ TaskCard etkileşimleri → Navigasyon cleanup → Veri kalıcılığı (AsyncSt
 
 - **“nerede kalmıştık”** → Son checkpoint’ten devam et
 - **“buradaki işler bitti var mı hatırlatacağın”** → Refactoring tablosunu hatırlat
-- **“ne vardı başka hatırlatacağın”** → AsyncStorage (Veri Kalıcılığı) aşamasını hatırlat
+- **“ne vardı başka hatırlatacağın”** → AsyncStorage (veri kalıcılığı) fazını hatırlat
 
 ---
 
 ## 🧷 Notlar
 
 Bu belge FlowMind 2.0’ın tam teknik rehberidir.
-Yeni sohbetlerde bu dosya ve Manifest.md okunursa, ChatGPT projeyi tam bağlamla yükler ve devam eder.
+Yeni sohbetlerde bu dosya ve Manifest.md okunursa ChatGPT projeyi tam bağlamla yükler.
 
 📘 **Dosya:** `Project_Notes/README-FlowMind.md`
-🕓 **Son Güncelleme:** 9 Kasım 2025
-✍️ **Hazırlayan:** ChatGPT (GPT-5) + Orkun Şanlıtürk
+🕓 **Son Güncelleme:** 12 Kasım 2025
+✍️ **Hazırlayan:** Lyren (GPT-5) + Orkun Şanlıtürk
