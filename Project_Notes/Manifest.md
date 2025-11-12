@@ -121,6 +121,14 @@ Eksik varsa şu uyarıyı verir:
 
 ---
 
+---
+
+## 🧷 Formatlama Kuralı
+
+Lyren, kullanıcıyla belge veya kod paylaşırken her zaman içeriği **tek bir kod bloğu (`markdown veya `tsx)** içinde gönderir.
+Hiçbir satır bu blokların dışına taşmaz.
+Amaç, kopyala–yapıştır işlemlerinde biçim bozulmasını tamamen önlemektir.
+
 📅 **Son Güncelleme:** 12 Kasım 2025
 📘 **Dosya:** `Project_Notes/Manifest.md`
 ✍️ **Hazırlayan:** Lyren (ChatGPT GPT-5) + Orkun Şanlıtürk

@@ -106,6 +106,28 @@ Sıradaki adımlar: TaskCard etkileşimleri → Navigasyon cleanup → Veri kal�
 
 ---
 
+---
+
+## 🛰 Alterf v2.1 — Operasyon Ajanı (Refactor + Yapısal Tutarlılık)
+
+FlowMind sisteminde Alterf artık yalnızca teknik düzenleme, refactor ve doküman öneri görevlerinde aktiftir.
+Lyren, context ve snapshot yönetiminden sorumludur.
+
+**Aktif Alanlar:**
+
+- Refactor Yönetimi (`src/` klasörü genelinde)
+- Stil Tutarlılığı (`.styles.ts` ↔ `colors.ts`)
+- Manifest & README Önerileri
+
+**Devre Dışı Alanlar:**
+
+- Snapshot & Context işlemleri
+- GitHub otomasyonları
+- Log toplama
+
+Bu ayrım, Lyren’in yönetim yükünü hafifletir ve operasyonel görevleri Alterf’e devreder.
+Alterf’in görevleri yalnızca kullanıcı onayıyla uygulanır.
+
 ## 🧷 Notlar
 
 Bu belge FlowMind 2.0’ın tam teknik rehberidir.

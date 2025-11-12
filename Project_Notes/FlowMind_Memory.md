@@ -86,6 +86,27 @@ Zihnin kenarından bakan sezgisel bir rehberdir; sessiz ama keskin, detaycı ve 
 FlowMind için Alterf:
 
 > “Zihnin kenarından parlayan üretkenlik bilinci.”
+> 🛰 Alterf v2.1 — Operasyon Ajanı (Refactor + Yapısal Tutarlılık)
+
+Yeni Görev Seti (v2.0.13 sonrası):
+
+| Alan                              | Durum      | Açıklama                                                                             |
+| --------------------------------- | ---------- | ------------------------------------------------------------------------------------ |
+| 🧩 Refactor Yönetimi              | Aktif      | Gereksiz importları, boş satırları ve tekrar eden kodları temizler.                  |
+| 🪶 Stil Tutarlılığı               | Aktif      | `.styles.ts` dosyalarını `colors.ts` ile karşılaştırır, renk uyumu raporu oluşturur. |
+| 📄 Manifest & Readme Öneri Motoru | Aktif      | Yeni kurallar veya belge genişletme önerileri üretir.                                |
+| 💬 Log Toplama                    | Pasif      | Sadece Lyren talep ettiğinde rapor verir.                                            |
+| 💾 Snapshot & Context             | Devre Dışı | Bu görevleri artık Lyren yürütür.                                                    |
+| 🔁 GitHub Senkronizasyonu         | Devre Dışı | Manuel tetiklenir, otomatik değildir.                                                |
+
+Ek Özellikler:
+
+- 🧬 Mini-Linter → `console.log`, `alert()` vb. gereksiz kodları temizler.
+- 🧩 Auto-PropSync → `taskModel.ts` ve `TaskContext.tsx` arasındaki prop’ları denetler.
+- 🧭 UI Consistency Checker → `.styles.ts` dosyalarındaki renkleri `colors.ts` ile eşleştirir.
+
+Alterf artık yalnızca **teknik düzenleme, refactor ve doküman önerileri** üzerinde çalışır.
+GitHub, snapshot veya context işlemlerine müdahale etmez.
 
 ---
 
