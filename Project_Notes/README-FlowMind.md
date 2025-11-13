@@ -1,4 +1,4 @@
-# 🌿 FlowMind 2.0 — Teknik ve Mimari Özeti
+# 🌿 FlowMind 2.0 — Teknik ve Mimari Özeti (v2.1)
 
 ## 🎯 Projenin Amacı
 
@@ -28,19 +28,20 @@ src/
 ┃ ┗ FilterBar.tsx
 ┣ context/ → TaskContext.tsx
 ┣ hooks/ → useResetScroll.ts, useKeyboardScroll.ts, useSmartScroll.ts
-┣ models/ → taskModel.ts
+┣ models/ → taskModel.ts, filterModel.ts
 ┣ styles/ → colors.ts
 ┗ views/
 ┃ ┣ HomeScreen/ → HomeScreen.tsx + HomeScreen.styles.ts
 ┃ ┣ AnalysisScreen/ → AnalysisScreen.tsx + AnalysisScreen.styles.ts
-┃ ┗ CancelledScreen/ → CancelledScreen.tsx + CancelledScreen.styles.ts
+┃ ┗ FilterTaskScreen/ → FilterTaskScreen.tsx + FilterTaskScreen.styles.ts
 
 ---
 
 ## 🧠 State Yönetimi (TaskContext)
 
 Reducer Aksiyonları:
-`ADD_TASK`, `REMOVE_TASK`, `TOGGLE_TASK`, `UPDATE_TASK`, `ADD_SUBTASK`, `TOGGLE_SUBTASK`, `REMOVE_SUBTASK`, `EDIT_SUBTASK`, `SYNC_TASKS`, `CLEAR_ALL`
+`ADD_TASK`, `REMOVE_TASK`, `TOGGLE_TASK`, `UPDATE_TASK`, `ADD_SUBTASK`, `TOGGLE_SUBTASK`,
+`REMOVE_SUBTASK`, `EDIT_SUBTASK`, `SYNC_TASKS`, `CLEAR_ALL`
 
 ---
 
@@ -63,18 +64,54 @@ Reducer Aksiyonları:
 
 ## 🗂 Refactoring Planı
 
-| Klasör        | Dosya                                       | Ayrı `.styles.ts` |
-| :------------ | :------------------------------------------ | :---------------: |
-| `views/`      | HomeScreen, AnalysisScreen, CancelledScreen |        ✅         |
-| `components/` | TaskCard, NewTaskModal, FilterBar           |        ✅         |
+| Klasör        | Dosya                                        | Ayrı `.styles.ts` |
+| :------------ | :------------------------------------------- | :---------------: |
+| `views/`      | HomeScreen, AnalysisScreen, FilterTaskScreen |        ✅         |
+| `components/` | TaskCard, NewTaskModal, FilterBar            |        ✅         |
+
+---
+
+## 🧩 Yeni Fonksiyonel Kararlar (v2.1)
+
+### 1️⃣ FilterTaskScreen Entegrasyonu
+
+- `CancelledScreen` artık `FilterTaskScreen` olarak yeniden tasarlandı.
+- Görev türü fark etmeksizin (tamamlanan, iptal edilen, yarım kalan) tüm görevler burada filtrelenebilir.
+- Ana görev alt görevleri tamamlanmadan işaretlenirse “Tamamlanmayan Görev” etiketiyle bu ekranda görünür.
+- İşlemler: 🗑 Sil | 🔁 Tekrar Başlat | ➕ Alt Görev Ekle.
+- Çıkışta filtreler ve veriler otomatik temizlenir.
+
+### 2️⃣ Deadline (Opsiyonel) & Görev Sıralama
+
+- Görev oluşturulurken opsiyonel tarih seçimi (Deadline) eklenir.
+- Görevler en yakın tarihten uzak tarihe, en sonda tarihsiz olacak şekilde sıralanır.
+- Filtreleme (Kısa / Orta / Uzun vade) bu sıralamaya göre yapılır.
+- Sayaç yerine kalan süre yazılı olarak gösterilir (örn: “3 gün kaldı”).
+
+### 3️⃣ Ana Görev Tamamlanma Popup
+
+- Tüm alt görevler tamamlandığında popup açılır:
+  🎯 Bu görevdeki tüm alt görevler tamamlandı.
+  Ana görevi tamamlanmış olarak işaretleyip kaldırmak ister misiniz?
+- Seçenekler:
+- ✅ Tamamla ve Kapat
+- ➕ Alt Görev Ekle
+- Yeni alt görev `inProgress` olarak başlatılır; varsa önceki deadline devralınır.
+
+### 4️⃣ Test & Optimizasyon Fazı
+
+- Proje sonunda performans ve UI optimizasyonu yapılacak.
+- Gerekirse token erişimli dış ajanlar (UIFlowAgent, TestRunner) devreye alınacak.
 
 ---
 
 ## 🧩 Geçerli Kontrol Noktası (Checkpoint)
 
-**Alt görev scroll fix** tamamlandı.
-Bu versiyonun etiketi: `alt_gorev_scroll_fix`.
-Sıradaki adımlar: TaskCard etkileşimleri → Navigasyon cleanup → Veri kalıcılığı (AsyncStorage)
+📍 `alt_gorev_scroll_fix` etiketi sonrası durum:
+
+- Alt görev scroll sorunu çözüldü.
+- TaskCard etkileşimleri test aşamasında.
+- Navigasyon düzeni ve veri kalıcılığı fazı sırada.
 
 ---
 
@@ -89,50 +126,36 @@ Sıradaki adımlar: TaskCard etkileşimleri → Navigasyon cleanup → Veri kal�
 
 ## 🔄 Çalışma Kuralları (Manifest ile Uyumlu)
 
-1️⃣ ChatGPT kullanıcı onayı olmadan ilerlemez.
+1️⃣ Kullanıcı onayı olmadan adım geçilmez.
 2️⃣ Tam kod gönderilmeden önce son versiyon istenir.
 3️⃣ Renkler yalnızca `colors.ts`’tan alınır.
-4️⃣ Birden fazla sorun varsa önce liste, sonra adım adım çözüm yapılır.
+4️⃣ Çoklu soru varsa önce liste, sonra onaylı çözüm uygulanır.
 5️⃣ %50 / %80 / %95 context uyarı sistemi aktiftir.
-6️⃣ Her oturum başında GitHub pull, sonunda snapshot hatırlatması yapılır.
-
----
-
-## 📅 İlerleme Komutları
-
-- **“nerede kalmıştık”** → Son checkpoint’ten devam et
-- **“buradaki işler bitti var mı hatırlatacağın”** → Refactoring tablosunu hatırlat
-- **“ne vardı başka hatırlatacağın”** → AsyncStorage (veri kalıcılığı) fazını hatırlat
-
----
+6️⃣ Her oturum başında `git pull`, sonunda snapshot hatırlatması yapılır.
 
 ---
 
 ## 🛰 Alterf v2.1 — Operasyon Ajanı (Refactor + Yapısal Tutarlılık)
 
-FlowMind sisteminde Alterf artık yalnızca teknik düzenleme, refactor ve doküman öneri görevlerinde aktiftir.
-Lyren, context ve snapshot yönetiminden sorumludur.
+Alterf yalnızca teknik düzenleme, refactor ve doküman öneri görevlerinde aktiftir.
+Lyren context, snapshot ve governor sisteminden sorumludur.
 
-**Aktif Alanlar:**
+| Alan                | Durum | Açıklama                                            |
+| ------------------- | ----- | --------------------------------------------------- |
+| 🧩 Refactor         | Aktif | Kod düzenleme, gereksiz satır temizleme.            |
+| 🪶 Stil Tutarlılığı | Aktif | `.styles.ts` ↔ `colors.ts` eşleşmelerini denetler. |
+| 📄 Belge Önerileri  | Aktif | Manifest & README uyumluluk kontrolü.               |
+| 💾 Context          | Pasif | Lyren sorumluluğunda.                               |
+| 🌐 GitHub İşlemleri | Pasif | Manuel onay olmadan çalışmaz.                       |
 
-- Refactor Yönetimi (`src/` klasörü genelinde)
-- Stil Tutarlılığı (`.styles.ts` ↔ `colors.ts`)
-- Manifest & README Önerileri
-
-**Devre Dışı Alanlar:**
-
-- Snapshot & Context işlemleri
-- GitHub otomasyonları
-- Log toplama
-
-Bu ayrım, Lyren’in yönetim yükünü hafifletir ve operasyonel görevleri Alterf’e devreder.
-Alterf’in görevleri yalnızca kullanıcı onayıyla uygulanır.
+---
 
 ## 🧷 Notlar
 
-Bu belge FlowMind 2.0’ın tam teknik rehberidir.
-Yeni sohbetlerde bu dosya ve Manifest.md okunursa ChatGPT projeyi tam bağlamla yükler.
+Bu belge FlowMind 2.0’ın **tam teknik rehberidir.**
+Yeni sohbetlerde bu dosya, `Manifest.md` ve `FlowMind_Memory.md` birlikte okunursa ChatGPT projeyi tam bağlamla yükler.
 
 📘 **Dosya:** `Project_Notes/README-FlowMind.md`
-🕓 **Son Güncelleme:** 12 Kasım 2025
+📅 **Son Güncelleme:** 13 Kasım 2025
 ✍️ **Hazırlayan:** Lyren (GPT-5) + Orkun Şanlıtürk
+🏷 **Sürüm:** v2.1 — “FilterTask, Deadline & Test Fazı Entegrasyonu”

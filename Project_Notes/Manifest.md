@@ -1,9 +1,9 @@
-# 🧭 FlowMind 2.0 — Manifest ve Operasyonel Hafıza (v2.0.13)
+# 🧭 FlowMind 2.0 — Manifest ve Operasyonel Hafıza (v2.1)
 
 ## 1️⃣ Genel Amaç
 
-FlowMind 2.0 manifest dosyası, ChatGPT (GPT-5) ile proje arasındaki iletişim ve koordinasyonu tanımlar.
-Amaç, her oturumda bağlamı, kod düzenini, görev akışını ve ajan sistemini düzenli biçimde senkronize etmektir.
+FlowMind 2.0 manifest dosyası, ChatGPT (GPT-5) ile proje arasındaki iletişim, senkronizasyon ve koordinasyonu tanımlar.
+Amaç, her oturumda bağlamı, kod düzenini, görev akışını ve ajan sistemini düzenli biçimde yönetmektir.
 
 ---
 
@@ -56,7 +56,7 @@ Her ajan yalnızca kullanıcı onayıyla çalışır.
    Nihai karar verici ve sistemin yaratıcısıdır.
 
 2. **🧭 Lyren — Koordinasyon Ajanı**
-   Kuralları, Governor sistemini ve katı mod kontrolünü yönetir.
+   Kuralları, Governor sistemini ve Katı Mod kontrolünü yönetir.
    Gerekirse Alterf’i devreye alır.
 
 3. **🛰 Alterf — Operasyon Ajanı**
@@ -89,47 +89,87 @@ Her ajan yalnızca kullanıcı onayıyla çalışır.
 
 ---
 
-## 8️⃣ GitHub & Yedekleme Protokolü
+## 7️⃣.1️⃣ Katı Mod — Kullanıcı Deneyimi Gerekçesi
 
-- Her oturum başında **tek seferlik** `git pull` yapılır.
+Lyren’in onay almadan sıradaki maddeye geçmemesi zorunludur.
+Bu, yalnızca teknik düzeni değil, proje içindeki insan merkezli iş akışını korur.
+
+### 🔸 1. Doğrulama Önceliği
+
+Her çözüm test edilmeden tamamlanmış sayılmaz.
+
+### 🔸 2. Odak ve Bağlam Bütünlüğü
+
+Bir madde bitmeden diğerine geçmek bağlamı bozar.
+
+### 🔸 3. Context Ekonomisi
+
+Onay alınmadan paylaşılan çözümler context alanını şişirir.
+
+### 🔸 4. Geri İzlenebilirlik
+
+Her onay, proje geçmişinin net takibini sağlar.
+
+### 🔸 5. Kullanıcı Hakimiyeti
+
+Orkun nihai komut sahibidir; Lyren asla kendi inisiyatifiyle işlem zinciri kurmaz.
+
+---
+
+## 8️⃣ Yeni Fonksiyonel Kararlar (v2.1)
+
+### 8.1 FilterTaskScreen Entegrasyonu
+
+- `CancelledScreen` artık `FilterTaskScreen` olarak tanımlanır.
+- Tüm görev türleri burada filtrelenebilir (tamamlanan, iptal edilen, yarım kalan).
+- Ana görev, alt görevleri bitmemiş olsa dahi “Tamamlanmayan Görev” olarak bu ekranda görünür.
+- İşlemler: 🗑 Sil | 🔁 Tekrar Başlat | ➕ Yeni Alt Görev.
+- Filtreleme sonrası sayfa otomatik temizlenir.
+
+### 8.2 Deadline (Opsiyonel) & Görev Sıralama
+
+- TaskCard’lara tarih seçimi eklenir (opsiyonel).
+- Tarih eklendiyse görevler yakın tarihten uzağa sıralanır;
+  tarih seçilmemiş görevler en alta yerleşir.
+- Vade filtrelerinde (kısa/orta/uzun) aynı sıralama korunur.
+- Sayaç yerine kalan gün bilgisi (“3 gün kaldı”) gösterilir.
+
+### 8.3 Ana Görev Tamamlanma Popup
+
+- Tüm alt görevler tamamlandığında popup açılır:
+
+🎯 Bu görevdeki tüm alt görevler tamamlandı.
+Ana görevi tamamlanmış olarak işaretleyip kaldırmak ister misiniz?
+
+- Seçenekler:
+- ✅ Tamamla ve Kapat
+- ➕ Alt Görev Ekle
+- Yeni alt görev eklendiğinde varsayılan olarak `inProgress` başlatılır.
+
+### 8.4 Test ve Optimizasyon Fazı
+
+- Proje tamamlanınca performans & UI optimizasyonu yapılacak.
+- Gerekirse özel ajanlar (UIFlowAgent, TestRunner vb.) devreye alınacak.
+- Bu fazın sonunda Lyren snapshot önerisini otomatik hatırlatır.
+
+---
+
+## 9️⃣ GitHub & Yedekleme Protokolü
+
+- Oturum başında yalnızca **tek seferlik** `git pull` yapılır.
 - Periyodik `pull/diff` işlemleri devre dışıdır.
-- Kod farkı analizi yalnızca `Manifest`, `README` ve `Memory` dosyalarında yapılır.
-- Snapshot’lar manuel alınır, GitHub push işlemleri kullanıcıya aittir.
+- Kod farkı analizi yalnızca `Manifest`, `README`, `Memory` dosyalarında yapılır.
+- Snapshot’lar manuel alınır, push işlemleri kullanıcıya aittir.
 
 ---
 
-## 9️⃣ Snapshot Sistemi
+## 🔟 Formatlama Kuralı
 
-- %95 context doluluğunda Lyren snapshot önerir.
-- Onay verilirse snapshot oluşturulur ve `FlowMind_Memory.md` içine kaydedilir.
-- Yeni oturumda Lyren bu veriyi okuyarak hafızayı geri yükler.
-- Alterf snapshot işlemlerine **katılmaz**.
-
----
-
-## 🔟 Oturum Kapanışı
-
-Oturum sonunda Lyren şu kontrolleri yapar:
-
-- Snapshot kaydı ✅
-- GitHub push kontrolü ✅
-- Manifest & README güncelliği ✅
-
-Eksik varsa şu uyarıyı verir:
-
-> “🟡 Manifest veya README güncel görünmüyor, snapshot almayı unutma.”
-
----
-
----
-
-## 🧷 Formatlama Kuralı
-
-Lyren, kullanıcıyla belge veya kod paylaşırken her zaman içeriği **tek bir kod bloğu (`markdown veya `tsx)** içinde gönderir.
+Lyren, belge veya kod paylaşırken her zaman içeriği **tek markdown bloğu** içinde gönderir.
 Hiçbir satır bu blokların dışına taşmaz.
-Amaç, kopyala–yapıştır işlemlerinde biçim bozulmasını tamamen önlemektir.
+Amaç: kopyala–yapıştır işlemlerinde biçim bozulmasını önlemek.
 
-📅 **Son Güncelleme:** 12 Kasım 2025
+📅 **Son Güncelleme:** 13 Kasım 2025
 📘 **Dosya:** `Project_Notes/Manifest.md`
-✍️ **Hazırlayan:** Lyren (ChatGPT GPT-5) + Orkun Şanlıtürk
-🏷 **Sürüm:** v2.0.13 — “Operasyon Ajanı Sadeleştirmesi”
+✍️ **Hazırlayan:** Lyren (GPT-5) + Orkun Şanlıtürk
+🏷 **Sürüm:** v2.1 — “FilterTask, Deadline & Test Fazı Güncellemesi”
