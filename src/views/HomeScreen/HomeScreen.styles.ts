@@ -54,10 +54,62 @@ export const styles = StyleSheet.create({
   filterText: { color: Colors.textPrimary, fontSize: 14, fontWeight: '500' },
   filterTextActive: { color: Colors.white, fontWeight: '700' },
 
+  // Sıralama bar ve butonları
+  sortRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 10,
+    marginBottom: 15,
+  },
+  sortButton: {
+    backgroundColor: Colors.card,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+  },
+  sortButtonActive: { backgroundColor: Colors.oliveSoft },
+  sortText: { color: Colors.textPrimary, fontSize: 13, fontWeight: '500' },
+  sortTextActive: { color: Colors.white, fontWeight: '700' },
+
   // Boş liste mesajı
   empty: {
     color: Colors.textSecondary,
     marginTop: 40,
     textAlign: 'center',
+  },
+
+  // ⬆️ Başa Dön butonu
+  scrollTopButton: {
+    alignItems: 'center',
+    backgroundColor: Colors.oliveSoft,
+    borderRadius: 26,
+    bottom: 24,
+    elevation: 6,
+    height: 52,
+    justifyContent: 'center',
+    position: 'absolute',
+    right: 20,
+    shadowColor: Colors.shadowBlack,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    width: 52,
+  },
+  // ⬇️ Sona Git butonu — "Başa Dön"ün 12px üstünde, çakışmadan
+  scrollBottomButton: {
+    alignItems: 'center',
+    backgroundColor: Colors.oliveSoft,
+    borderRadius: 26,
+    bottom: 24 + 52 + 12,
+    elevation: 6,
+    height: 52,
+    justifyContent: 'center',
+    position: 'absolute',
+    right: 20,
+    shadowColor: Colors.shadowBlack,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    width: 52,
   },
 });

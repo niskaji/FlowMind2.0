@@ -4,26 +4,38 @@
 // --------------------------------------------------
 // 🔹 Görev Durum Tipleri
 // --------------------------------------------------
-export type TaskStatus = 'pending' | 'completed' | 'cancelled' | 'incomplete' | 'partial';
+// Ana görev: 3 durum — normal koşullarda veritabanından fiziksel olarak
+// silinmez, "İptal Et"/"Tamamla" birer durum değişikliğidir (soft-delete).
+export type TaskStatus = 'pending' | 'completed' | 'cancelled';
+
+// Alt görev: sadece 2 durum — tek başına "iptal edilemez", çöp kutusu
+// gerçek/kalıcı silmedir (hard delete). "İptal edilen alt görev" sayısı,
+// ana görevi iptal edilmiş alt görevler üzerinden CANLI türetilir
+// (bkz. src/db/taskRepository.ts ve AnalysisScreen.tsx).
+export type SubtaskStatus = 'pending' | 'completed';
 
 // --------------------------------------------------
 // 🔹 Alt Görev Modeli
 // --------------------------------------------------
 export interface Subtask {
-  id: string;
+  id: number;
   title: string;
-  status: TaskStatus;
+  status: SubtaskStatus;
+  // 🗓️ Hedef tarih (deadline) — "YYYY-MM-DD" formatında, opsiyonel
+  deadline?: string | null;
 }
 
 // --------------------------------------------------
 // 🔹 Ana Görev Modeli
 // --------------------------------------------------
 export interface Task {
-  id: string;
+  id: number;
   title: string;
   category: 'short' | 'medium' | 'long';
   status: TaskStatus;
   subtasks?: Subtask[];
+  // 🗓️ Hedef tarih (deadline) — "YYYY-MM-DD" formatında, opsiyonel
+  deadline?: string | null;
 }
 
 // --------------------------------------------------
@@ -31,24 +43,25 @@ export interface Task {
 // --------------------------------------------------
 export interface TaskState {
   tasks: Task[];
-  removedTasks: Task[];
 }
 
 // --------------------------------------------------
 // 🔹 Reducer Eylemleri
 // --------------------------------------------------
 export type TaskAction =
-  | { type: 'ADD_TASK'; payload: Task }
-  | { type: 'REMOVE_TASK'; payload: string }
-  | { type: 'TOGGLE_TASK'; payload: string }
-  | { type: 'UPDATE_TASK'; payload: Task }
-  | { type: 'RESTORE_TASK'; payload: string }
+  | { type: 'ADD_TASK'; payload: { title: string; category: Task['category']; deadline?: string } }
+  | { type: 'REMOVE_TASK'; payload: number } // soft-cancel ("İptal Et")
+  | { type: 'TOGGLE_TASK'; payload: number } // "Tamamla" (iki yönlü toggle)
+  | { type: 'UPDATE_TASK'; payload: Task } // başlık/son tarih düzenleme
+  | { type: 'REACTIVATE_TASK'; payload: number } // "Yeniden Aktifleştir"
   | { type: 'SYNC_TASKS'; payload: TaskState }
-  | { type: 'CLEAR_ALL' }
-  | { type: 'ADD_SUBTASK'; payload: { parentId: string; title: string } }
-  | { type: 'TOGGLE_SUBTASK'; payload: { parentId: string; subtaskId: string } }
-  | { type: 'REMOVE_SUBTASK'; payload: { parentId: string; subtaskId: string } }
-  | { type: 'EDIT_SUBTASK'; payload: { parentId: string; subtaskId: string; title: string } };
+  | { type: 'ADD_SUBTASK'; payload: { parentId: number; title: string } }
+  | { type: 'TOGGLE_SUBTASK'; payload: { parentId: number; subtaskId: number } }
+  | { type: 'REMOVE_SUBTASK'; payload: { parentId: number; subtaskId: number } } // hard delete
+  | {
+      type: 'EDIT_SUBTASK';
+      payload: { parentId: number; subtaskId: number; title: string; deadline?: string };
+    };
 
 // --------------------------------------------------
 // 🔹 Context Tipi
@@ -57,41 +70,3 @@ export interface TaskContextType {
   state: TaskState;
   dispatch: React.Dispatch<TaskAction>;
 }
-
-// --------------------------------------------------
-// 🔹 Başlangıç Mock Verileri (Analiz ekranı için yeterli)
-// --------------------------------------------------
-export const initialTasks: Task[] = [
-  {
-    id: '1',
-    title: 'Yeni Özellik Geliştirme',
-    category: 'short',
-    status: 'pending',
-    subtasks: [
-      { id: '1-1', title: 'Arayüz Tasarımı', status: 'completed' },
-      { id: '1-2', title: 'Kodlama', status: 'pending' },
-      { id: '1-3', title: 'Test Süreci', status: 'pending' },
-    ],
-  },
-  {
-    id: '2',
-    title: 'Analiz Raporu Hazırlığı',
-    category: 'medium',
-    status: 'completed',
-    subtasks: [
-      { id: '2-1', title: 'Veri Toplama', status: 'completed' },
-      { id: '2-2', title: 'Grafik Oluşturma', status: 'completed' },
-    ],
-  },
-  {
-    id: '3',
-    title: 'Proje Revizyon Planı',
-    category: 'long',
-    status: 'pending',
-    subtasks: [
-      { id: '3-1', title: 'Toplantı Planı', status: 'pending' },
-      { id: '3-2', title: 'Revizyon Taslağı', status: 'pending' },
-      { id: '3-3', title: 'Onay Süreci', status: 'pending' },
-    ],
-  },
-];

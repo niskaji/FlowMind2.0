@@ -18,7 +18,15 @@ import {
 
 import { useTaskContext } from '../../context/TaskContext';
 import { useSmartScroll } from '../../hooks/useSmartScroll';
-import type { Subtask, Task, TaskStatus } from '../../models/taskModel';
+import type { Task } from '../../models/taskModel';
+import { Colors } from '../../styles/colors';
+import {
+  formatDateTR,
+  getRemainingTimeLabel,
+  isPastDeadline,
+  parseDateOnlyISO,
+} from '../../utils/dateUtils';
+import DeadlinePicker from '../DeadlinePicker/DeadlinePicker';
 
 import { styles } from './TaskCard.styles';
 
@@ -39,9 +47,13 @@ export default function TaskCard({ task, autoFocusRef, onSubtaskAdded }: TaskCar
   // ------------------------------------------------------------
   const [editing, setEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState(task.title);
+  const [editedDeadline, setEditedDeadline] = useState<string | undefined>(
+    task.deadline ?? undefined,
+  );
   const [newSubtask, setNewSubtask] = useState('');
-  const [editingSubtaskId, setEditingSubtaskId] = useState<string | null>(null);
+  const [editingSubtaskId, setEditingSubtaskId] = useState<number | null>(null);
   const [editedSubtaskTitle, setEditedSubtaskTitle] = useState('');
+  const [editedSubtaskDeadline, setEditedSubtaskDeadline] = useState<string | undefined>(undefined);
 
   // ------------------------------------------------------------
   // 🧭 ScrollView referansları
@@ -76,13 +88,27 @@ export default function TaskCard({ task, autoFocusRef, onSubtaskAdded }: TaskCar
   // ------------------------------------------------------------
   // 🧩 Ana görev aksiyonları
   // ------------------------------------------------------------
-  const toggleComplete = () => dispatch({ type: 'TOGGLE_TASK', payload: task.id });
+  // 🔒 Alt görevleri olan bir ana görev, TÜM alt görevler tamamlanana kadar kilitli kalır
+  const activeSubtasks = task.subtasks ?? [];
+  const hasSubtasks = activeSubtasks.length > 0;
+  const allSubtasksCompleted = hasSubtasks
+    ? activeSubtasks.every(s => s.status === 'completed')
+    : true;
+  const isCheckboxLocked = hasSubtasks && !allSubtasksCompleted;
+
+  const toggleComplete = () => {
+    if (isCheckboxLocked) return;
+    dispatch({ type: 'TOGGLE_TASK', payload: task.id });
+  };
   const removeTask = () => dispatch({ type: 'REMOVE_TASK', payload: task.id });
 
   const saveEdit = () => {
     const safeTitle = editedTitle.trim();
     if (!safeTitle) return setEditing(false);
-    dispatch({ type: 'UPDATE_TASK', payload: { ...task, title: safeTitle } });
+    dispatch({
+      type: 'UPDATE_TASK',
+      payload: { ...task, title: safeTitle, deadline: editedDeadline },
+    });
     setEditing(false);
   };
 
@@ -93,18 +119,7 @@ export default function TaskCard({ task, autoFocusRef, onSubtaskAdded }: TaskCar
     const title = newSubtask.trim();
     if (!title) return;
 
-    const newSub: Subtask = {
-      id: Date.now().toString(),
-      title,
-      status: 'pending' as TaskStatus,
-    };
-
-    const updated: Task = {
-      ...task,
-      subtasks: [...(task.subtasks ?? []), newSub],
-    };
-
-    dispatch({ type: 'UPDATE_TASK', payload: updated });
+    dispatch({ type: 'ADD_SUBTASK', payload: { parentId: task.id, title } });
     setNewSubtask('');
 
     // Küçük feed-back animasyonu
@@ -129,52 +144,43 @@ export default function TaskCard({ task, autoFocusRef, onSubtaskAdded }: TaskCar
   // ------------------------------------------------------------
   // ✅ Alt görev durum değiştirme / düzenleme / silme
   // ------------------------------------------------------------
-  const toggleSubtask = (subtaskId: string) => {
-    const updated: Task = {
-      ...task,
-      subtasks: task.subtasks?.map(s =>
-        s.id === subtaskId
-          ? {
-              ...s,
-              status:
-                s.status === 'completed' ? ('pending' as TaskStatus) : ('completed' as TaskStatus),
-            }
-          : s,
-      ),
-    } as Task;
-    dispatch({ type: 'UPDATE_TASK', payload: updated });
+  const toggleSubtask = (subtaskId: number) => {
+    dispatch({ type: 'TOGGLE_SUBTASK', payload: { parentId: task.id, subtaskId } });
   };
 
-  const removeSubtask = (subtaskId: string) => {
-    const updated: Task = {
-      ...task,
-      subtasks: task.subtasks?.filter(s => s.id !== subtaskId),
-    } as Task;
-    dispatch({ type: 'UPDATE_TASK', payload: updated });
+  const removeSubtask = (subtaskId: number) => {
+    dispatch({ type: 'REMOVE_SUBTASK', payload: { parentId: task.id, subtaskId } });
   };
 
-  const saveSubtaskEdit = (subtaskId: string) => {
-    const updated: Task = {
-      ...task,
-      subtasks: task.subtasks?.map(s =>
-        s.id === subtaskId ? { ...s, title: editedSubtaskTitle.trim() } : s,
-      ),
-    } as Task;
-    dispatch({ type: 'UPDATE_TASK', payload: updated });
+  const saveSubtaskEdit = (subtaskId: number) => {
+    dispatch({
+      type: 'EDIT_SUBTASK',
+      payload: {
+        parentId: task.id,
+        subtaskId,
+        title: editedSubtaskTitle.trim(),
+        deadline: editedSubtaskDeadline,
+      },
+    });
     setEditingSubtaskId(null);
     setEditedSubtaskTitle('');
+    setEditedSubtaskDeadline(undefined);
   };
 
   // ------------------------------------------------------------
   // 📊 Progress hesaplama
   // ------------------------------------------------------------
-  const completedSubtasks = task.subtasks?.filter(s => s.status === 'completed').length;
+  const completedSubtasks = activeSubtasks.filter(s => s.status === 'completed').length;
   const progress =
-    task.subtasks && task.subtasks.length > 0
-      ? completedSubtasks! / task.subtasks.length
+    activeSubtasks.length > 0
+      ? completedSubtasks / activeSubtasks.length
       : task.status === 'completed'
         ? 1
         : 0;
+
+  // ⚠️ Süresi geçen görevler için görsel uyarı
+  const isOverdue = !!task.deadline && isPastDeadline(task.deadline);
+  const maxSubtaskDeadline = task.deadline ? parseDateOnlyISO(task.deadline) : undefined;
 
   // ------------------------------------------------------------
   // 🎨 Görsel yapı (View)
@@ -183,8 +189,13 @@ export default function TaskCard({ task, autoFocusRef, onSubtaskAdded }: TaskCar
     <Animated.View style={[styles.card, styles.shadow, { transform: [{ scale: subAnim }] }]}>
       {/* Üst Satır */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={toggleComplete} style={styles.checkbox}>
+        <TouchableOpacity
+          onPress={toggleComplete}
+          disabled={isCheckboxLocked}
+          style={[styles.checkbox, isCheckboxLocked && styles.checkboxLocked]}
+        >
           {task.status === 'completed' && <FontAwesome name="check" size={14} color="#3E2E23" />}
+          {isCheckboxLocked && <FontAwesome name="lock" size={11} color={Colors.midGray} />}
         </TouchableOpacity>
 
         {editing ? (
@@ -195,14 +206,28 @@ export default function TaskCard({ task, autoFocusRef, onSubtaskAdded }: TaskCar
             autoFocus
           />
         ) : (
-          <Text style={[styles.taskTitle, task.status === 'completed' && styles.titleCompleted]}>
+          <Text
+            style={[
+              styles.taskTitle,
+              task.status === 'completed' && styles.titleCompleted,
+              isOverdue && styles.titleOverdue,
+            ]}
+          >
             {task.title}
           </Text>
         )}
 
         <TouchableOpacity
           style={styles.iconButton}
-          onPress={() => (editing ? saveEdit() : setEditing(true))}
+          onPress={() => {
+            if (editing) {
+              saveEdit();
+            } else {
+              setEditedTitle(task.title);
+              setEditedDeadline(task.deadline ?? undefined);
+              setEditing(true);
+            }
+          }}
         >
           <FontAwesome name={editing ? 'check' : 'pencil'} size={16} color="#70573E" />
         </TouchableOpacity>
@@ -211,6 +236,21 @@ export default function TaskCard({ task, autoFocusRef, onSubtaskAdded }: TaskCar
           <FontAwesome name="trash" size={16} color="#8B3A2B" />
         </TouchableOpacity>
       </View>
+
+      {/* ✏️ Düzenleme modunda son tarih seçimi */}
+      {editing && (
+        <View style={styles.deadlineEditRow}>
+          <DeadlinePicker value={editedDeadline} onChange={setEditedDeadline} />
+        </View>
+      )}
+
+      {/* 📅 Son tarih ve kalan süre (tek satır) */}
+      {!editing && task.deadline && (
+        <Text style={[styles.deadlineText, isOverdue && styles.deadlineTextOverdue]}>
+          📅 {formatDateTR(task.deadline)} · {getRemainingTimeLabel(task.deadline)}
+          {isOverdue ? ' ⚠️' : ''}
+        </Text>
+      )}
 
       {/* Kategori & Progress */}
       <Text style={styles.categoryLabel}>Kategori: {kategoriAdi[task.category]}</Text>
@@ -228,52 +268,88 @@ export default function TaskCard({ task, autoFocusRef, onSubtaskAdded }: TaskCar
         onContentSizeChange={onContentSizeChange}
         contentContainerStyle={styles.subtasksContainer}
       >
-        {task.subtasks?.map(item => (
-          <View key={item.id} style={styles.subtaskRow}>
-            <TouchableOpacity
-              onPress={() => toggleSubtask(item.id)}
-              style={[styles.subCheckbox, item.status === 'completed' && styles.checkboxChecked]}
-            >
-              {item.status === 'completed' && (
-                <FontAwesome name="check" size={12} color="#3E2E23" />
+        {activeSubtasks.map(item => {
+          const isSubOverdue = !!item.deadline && isPastDeadline(item.deadline);
+
+          return (
+            <View key={item.id}>
+              <View style={styles.subtaskRow}>
+                <TouchableOpacity
+                  onPress={() => toggleSubtask(item.id)}
+                  style={[
+                    styles.subCheckbox,
+                    item.status === 'completed' && styles.checkboxChecked,
+                  ]}
+                >
+                  {item.status === 'completed' && (
+                    <FontAwesome name="check" size={12} color="#3E2E23" />
+                  )}
+                </TouchableOpacity>
+
+                {editingSubtaskId === item.id ? (
+                  <TextInput
+                    value={editedSubtaskTitle}
+                    onChangeText={setEditedSubtaskTitle}
+                    autoFocus
+                    style={styles.subInputEdit}
+                  />
+                ) : (
+                  <Text
+                    style={[
+                      styles.subtaskText,
+                      item.status === 'completed' && styles.titleCompleted,
+                      isSubOverdue && styles.titleOverdue,
+                    ]}
+                  >
+                    {item.title}
+                  </Text>
+                )}
+
+                <TouchableOpacity
+                  onPress={() => {
+                    if (editingSubtaskId === item.id) {
+                      saveSubtaskEdit(item.id);
+                    } else {
+                      setEditingSubtaskId(item.id);
+                      setEditedSubtaskTitle(item.title);
+                      setEditedSubtaskDeadline(item.deadline ?? undefined);
+                    }
+                  }}
+                  style={styles.iconButton}
+                >
+                  <FontAwesome
+                    name={editingSubtaskId === item.id ? 'check' : 'pencil'}
+                    size={14}
+                    color="#70573E"
+                  />
+                </TouchableOpacity>
+
+                <TouchableOpacity onPress={() => removeSubtask(item.id)} style={styles.iconButton}>
+                  <FontAwesome name="trash" size={14} color="#8B3A2B" />
+                </TouchableOpacity>
+              </View>
+
+              {/* ✏️ Düzenleme modunda alt görev son tarih seçimi (ana görev deadline'ını geçemez) */}
+              {editingSubtaskId === item.id && (
+                <View style={styles.subDeadlineEditRow}>
+                  <DeadlinePicker
+                    value={editedSubtaskDeadline}
+                    onChange={setEditedSubtaskDeadline}
+                    maximumDate={maxSubtaskDeadline}
+                  />
+                </View>
               )}
-            </TouchableOpacity>
 
-            {editingSubtaskId === item.id ? (
-              <TextInput
-                value={editedSubtaskTitle}
-                onChangeText={setEditedSubtaskTitle}
-                autoFocus
-                style={styles.subInputEdit}
-              />
-            ) : (
-              <Text
-                style={[styles.subtaskText, item.status === 'completed' && styles.titleCompleted]}
-              >
-                {item.title}
-              </Text>
-            )}
-
-            <TouchableOpacity
-              onPress={() =>
-                editingSubtaskId === item.id
-                  ? saveSubtaskEdit(item.id)
-                  : (setEditingSubtaskId(item.id), setEditedSubtaskTitle(item.title))
-              }
-              style={styles.iconButton}
-            >
-              <FontAwesome
-                name={editingSubtaskId === item.id ? 'check' : 'pencil'}
-                size={14}
-                color="#70573E"
-              />
-            </TouchableOpacity>
-
-            <TouchableOpacity onPress={() => removeSubtask(item.id)} style={styles.iconButton}>
-              <FontAwesome name="trash" size={14} color="#8B3A2B" />
-            </TouchableOpacity>
-          </View>
-        ))}
+              {/* 📅 Alt görev son tarih ve kalan süre (tek satır) */}
+              {editingSubtaskId !== item.id && item.deadline && (
+                <Text style={[styles.subDeadlineText, isSubOverdue && styles.deadlineTextOverdue]}>
+                  📅 {formatDateTR(item.deadline)} · {getRemainingTimeLabel(item.deadline)}
+                  {isSubOverdue ? ' ⚠️' : ''}
+                </Text>
+              )}
+            </View>
+          );
+        })}
       </ScrollView>
 
       {/* ➕ Alt görev ekleme alanı */}

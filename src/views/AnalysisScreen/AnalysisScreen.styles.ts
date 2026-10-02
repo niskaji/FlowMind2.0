@@ -28,17 +28,21 @@ export const styles = StyleSheet.create({
   },
   legendContainer: {
     alignItems: 'flex-start',
+    flex: 1,
     flexDirection: 'column',
-    flexShrink: 1,
-    flexWrap: 'wrap',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  chartWrapper: {
+    alignItems: 'center',
+    flexShrink: 0,
     justifyContent: 'center',
   },
-  percentText: {
-    color: Colors.textPrimary,
-    fontSize: 16,
-    fontWeight: '700',
-    marginTop: 10,
+  emptyChartText: {
+    color: Colors.textSecondary,
+    fontSize: 13,
     textAlign: 'center',
+    width: 120,
   },
   row: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
   safeArea: { backgroundColor: Colors.background, flex: 1 },

@@ -10,6 +10,10 @@ module.exports = function (api) {
             "@": "./src"
           }
         }
+      ],
+      [
+        "inline-import",
+        { "extensions": [".sql"] }
       ]
     ]
   };

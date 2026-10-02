@@ -20,12 +20,21 @@ export const styles = StyleSheet.create({
     width: 22,
   },
   checkboxChecked: { backgroundColor: Colors.lightGreen },
+  // 🔒 Tüm alt görevler tamamlanmadan kilitli ana görev checkbox'ı
+  checkboxLocked: { backgroundColor: Colors.softCream, opacity: 0.6 },
 
   header: { alignItems: 'center', flexDirection: 'row' },
+
+  // 📅 Son tarih & kalan süre
+  deadlineEditRow: { marginTop: 8 },
+  deadlineText: { color: Colors.mediumBrown, fontSize: 12, marginTop: 6 },
+  // ⚠️ Süresi geçen görev/alt görev (hem başlık hem tarih satırı için ortak)
+  deadlineTextOverdue: { color: Colors.error, fontWeight: '700' },
 
   // 🧩 Görev başlığı
   taskTitle: { color: Colors.textPrimary, flex: 1, fontSize: 16 },
   titleCompleted: { color: Colors.midGray, textDecorationLine: 'line-through' },
+  titleOverdue: { color: Colors.error },
   titleInput: {
     borderBottomWidth: 1,
     borderColor: Colors.beigeBorder,
@@ -60,6 +69,8 @@ export const styles = StyleSheet.create({
     width: 18,
   },
   subtaskText: { color: Colors.textPrimary, flex: 1, fontSize: 14 },
+  subDeadlineEditRow: { marginTop: 6, paddingLeft: 46 },
+  subDeadlineText: { color: Colors.mediumBrown, fontSize: 11, marginTop: 2, paddingLeft: 46 },
   subInputEdit: {
     borderBottomWidth: 1,
     borderColor: Colors.beigeBorder,

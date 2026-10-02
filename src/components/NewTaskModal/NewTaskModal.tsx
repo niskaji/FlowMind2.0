@@ -16,6 +16,7 @@ import {
   View,
 } from 'react-native';
 
+import DeadlinePicker from '../../components/DeadlinePicker/DeadlinePicker';
 import type { Task } from '../../models/taskModel';
 import { Colors } from '../../styles/colors';
 
@@ -40,6 +41,7 @@ export default function NewTaskModal({
   // ------------------------------------------------------------
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<Task['category']>(defaultCategory);
+  const [deadline, setDeadline] = useState<string | undefined>(undefined);
   const inputRef = useRef<TextInput>(null);
 
   // ------------------------------------------------------------
@@ -50,6 +52,7 @@ export default function NewTaskModal({
       Keyboard.dismiss();
       setTitle('');
       setCategory(defaultCategory);
+      setDeadline(undefined);
 
       const timer = setTimeout(() => {
         inputRef.current?.focus();
@@ -65,7 +68,7 @@ export default function NewTaskModal({
   const handleSave = () => {
     const trimmed = title.trim();
     if (!trimmed) return;
-    onSave({ title: trimmed, category });
+    onSave({ title: trimmed, category, deadline });
     onClose();
     setTitle('');
   };
@@ -116,6 +119,10 @@ export default function NewTaskModal({
               </TouchableOpacity>
             ))}
           </View>
+
+          {/* Son Tarih (Deadline) Seçimi */}
+          <Text style={[styles.label, { marginTop: 12 }]}>Son Tarih (opsiyonel)</Text>
+          <DeadlinePicker value={deadline} onChange={setDeadline} />
 
           {/* Alt Butonlar */}
           <View style={styles.row}>

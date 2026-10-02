@@ -1,16 +1,20 @@
 // -----------------------------------------------------------
 // 🧠 FlowMind 2.0 — TaskContext
-// Global görev durum yönetimi (Context + Reducer)
+// Global görev durum yönetimi (Context + Reducer).
+// Kalıcılık SQLite/Drizzle üzerinden sağlanır (bkz. src/db/taskRepository.ts).
+// dispatch, ilgili DB yazma işlemini yapar, ardından TÜM görevleri yeniden
+// çeker ve SYNC_TASKS ile state'i günceller — tek gerçek kaynak her zaman
+// veritabanıdır (optimistic update yok, sürüklenme riski sıfır).
 // -----------------------------------------------------------
 
-import { createContext, ReactNode, useContext, useEffect, useReducer } from 'react';
+import { createContext, ReactNode, useCallback, useContext, useEffect, useReducer } from 'react';
 
-import { Task, TaskAction, TaskContextType, TaskState } from '../models/taskModel';
+import * as taskRepository from '../db/taskRepository';
+import { TaskAction, TaskContextType, TaskState } from '../models/taskModel';
 
-// 🧩 1️⃣ Başlangıç state
+// 🧩 1️⃣ Başlangıç state — uygulama açılışında DB'den doldurulur
 const initialState: TaskState = {
   tasks: [],
-  removedTasks: [],
 };
 
 // 🧩 2️⃣ Context oluştur
@@ -19,217 +23,86 @@ const TaskContext = createContext<TaskContextType>({
   dispatch: () => undefined,
 });
 
-// 🧩 3️⃣ Mock (örnek) veriler — ZENGİNLEŞTİRİLMİŞ
-const devMockTasks: Task[] = [
-  {
-    id: '1',
-    title: 'UI Revizyonu Tamamla',
-    category: 'short',
-    status: 'completed',
-    subtasks: [
-      { id: '11', title: 'Yeni ikon seti ekle', status: 'completed' },
-      { id: '12', title: 'Buton kenar boşluklarını düzenle', status: 'pending' },
-    ],
-  },
-  {
-    id: '2',
-    title: 'FlowMind Analiz Ekranını Test Et',
-    category: 'medium',
-    status: 'completed',
-    subtasks: [
-      { id: '21', title: 'Pie Chart verilerini bağla', status: 'completed' },
-      { id: '22', title: 'Tamamlanma oranını doğrula', status: 'completed' },
-    ],
-  },
-  {
-    id: '3',
-    title: 'Kullanıcı Geri Bildirimleri Raporu',
-    category: 'long',
-    status: 'pending',
-    subtasks: [
-      { id: '31', title: 'Geri bildirimleri topla', status: 'completed' },
-      { id: '32', title: 'Kategorilere ayır', status: 'pending' },
-      { id: '33', title: 'Sonuç raporunu oluştur', status: 'pending' },
-    ],
-  },
-  {
-    id: '4',
-    title: 'Performans İyileştirme',
-    category: 'short',
-    status: 'pending',
-    subtasks: [
-      { id: '41', title: 'Memoization noktalarını ekle', status: 'completed' },
-      { id: '42', title: 'Re-render analizleri', status: 'pending' },
-      { id: '43', title: 'List virtualization kontrolü', status: 'pending' },
-      { id: '44', title: 'Batch update testi', status: 'completed' },
-    ],
-  },
-  {
-    id: '5',
-    title: 'Dokümantasyon Gözden Geçirme',
-    category: 'medium',
-    status: 'completed',
-    subtasks: [],
-  },
-  {
-    id: '6',
-    title: 'Bildirim Sistemi Tasarımı',
-    category: 'long',
-    status: 'pending',
-    subtasks: [
-      { id: '61', title: 'Push payload formatı', status: 'completed' },
-      { id: '62', title: 'Retry stratejisi', status: 'completed' },
-      { id: '63', title: 'Sessiz saatler', status: 'pending' },
-    ],
-  },
-];
-
-const devMockRemoved: Task[] = [
-  {
-    id: '1001',
-    title: 'Eski sürüm prototipini kaldır',
-    category: 'short',
-    status: 'cancelled',
-    subtasks: [],
-  },
-];
-
-// 🧩 4️⃣ Reducer — tüm eylemlerle
+// 🧩 3️⃣ Reducer — sadece DB'den gelen anlık görüntüyü uygular
 function reducer(state: TaskState, action: TaskAction): TaskState {
   switch (action.type) {
-    case 'ADD_TASK':
-      return { ...state, tasks: [...state.tasks, action.payload] };
-
-    case 'REMOVE_TASK': {
-      const removedTask = state.tasks.find(t => t.id === action.payload);
-      if (!removedTask) return state;
-      return {
-        ...state,
-        tasks: state.tasks.filter(t => t.id !== action.payload),
-        removedTasks: [...state.removedTasks, removedTask],
-      };
-    }
-
-    case 'TOGGLE_TASK':
-      return {
-        ...state,
-        tasks: state.tasks.map(t =>
-          t.id === action.payload
-            ? {
-                ...t,
-                status: t.status === 'completed' ? 'pending' : 'completed',
-              }
-            : t,
-        ),
-      };
-
-    case 'UPDATE_TASK':
-      return {
-        ...state,
-        tasks: state.tasks.map(t => (t.id === action.payload.id ? action.payload : t)),
-      };
-
-    case 'ADD_SUBTASK':
-      return {
-        ...state,
-        tasks: state.tasks.map(t =>
-          t.id === action.payload.parentId
-            ? {
-                ...t,
-                subtasks: [
-                  ...(t.subtasks ?? []),
-                  {
-                    id: Date.now().toString(),
-                    title: action.payload.title,
-                    status: 'pending',
-                  },
-                ],
-              }
-            : t,
-        ),
-      };
-
-    case 'TOGGLE_SUBTASK':
-      return {
-        ...state,
-        tasks: state.tasks.map(t =>
-          t.id === action.payload.parentId
-            ? {
-                ...t,
-                subtasks: t.subtasks?.map(s =>
-                  s.id === action.payload.subtaskId
-                    ? {
-                        ...s,
-                        status: s.status === 'completed' ? 'pending' : 'completed',
-                      }
-                    : s,
-                ),
-              }
-            : t,
-        ),
-      };
-
-    case 'REMOVE_SUBTASK':
-      return {
-        ...state,
-        tasks: state.tasks.map(t =>
-          t.id === action.payload.parentId
-            ? {
-                ...t,
-                subtasks: t.subtasks?.filter(s => s.id !== action.payload.subtaskId),
-              }
-            : t,
-        ),
-      };
-
-    case 'EDIT_SUBTASK':
-      return {
-        ...state,
-        tasks: state.tasks.map(t =>
-          t.id === action.payload.parentId
-            ? {
-                ...t,
-                subtasks: t.subtasks?.map(s =>
-                  s.id === action.payload.subtaskId ? { ...s, title: action.payload.title } : s,
-                ),
-              }
-            : t,
-        ),
-      };
-
     case 'SYNC_TASKS':
-      return {
-        ...state,
-        tasks: action.payload.tasks ?? [],
-        removedTasks: action.payload.removedTasks ?? [],
-      };
-
-    case 'CLEAR_ALL':
-      return initialState;
-
+      return { ...state, tasks: action.payload.tasks ?? [] };
     default:
       return state;
   }
 }
 
-// 🧩 5️⃣ Provider
+// 🧩 4️⃣ Provider
 export function TaskProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(reducer, initialState);
+  const [state, rawDispatch] = useReducer(reducer, initialState);
+
+  const refresh = useCallback(async () => {
+    const tasks = await taskRepository.getAllTasksWithSubtasks();
+    rawDispatch({ type: 'SYNC_TASKS', payload: { tasks } });
+  }, []);
 
   useEffect(() => {
-    if (__DEV__) {
-      console.log('🧩 FlowMind 2.0: Mock veriler yüklendi');
-      dispatch({
-        type: 'SYNC_TASKS',
-        payload: { tasks: devMockTasks, removedTasks: devMockRemoved },
+    refresh();
+  }, [refresh]);
+
+  const dispatch: TaskContextType['dispatch'] = useCallback(
+    action => {
+      (async () => {
+        switch (action.type) {
+          case 'ADD_TASK':
+            await taskRepository.createTask(action.payload);
+            break;
+          case 'REMOVE_TASK':
+            await taskRepository.cancelTask(action.payload);
+            break;
+          case 'TOGGLE_TASK':
+            await taskRepository.toggleTaskCompletion(action.payload);
+            break;
+          case 'UPDATE_TASK':
+            await taskRepository.updateTask({
+              id: action.payload.id,
+              title: action.payload.title,
+              deadline: action.payload.deadline ?? undefined,
+            });
+            break;
+          case 'REACTIVATE_TASK':
+            await taskRepository.reactivateTask(action.payload);
+            break;
+          case 'ADD_SUBTASK':
+            await taskRepository.addSubtask(action.payload.parentId, action.payload.title);
+            break;
+          case 'TOGGLE_SUBTASK':
+            await taskRepository.toggleSubtaskCompletion(action.payload.subtaskId);
+            break;
+          case 'REMOVE_SUBTASK':
+            await taskRepository.hardDeleteSubtask(action.payload.subtaskId);
+            break;
+          case 'EDIT_SUBTASK':
+            await taskRepository.editSubtask({
+              subtaskId: action.payload.subtaskId,
+              title: action.payload.title,
+              deadline: action.payload.deadline,
+            });
+            break;
+          case 'SYNC_TASKS':
+            rawDispatch(action);
+            return;
+          default:
+            break;
+        }
+        await refresh();
+      })().catch(error => {
+        console.error('🧠 TaskContext dispatch hatası:', error);
       });
-    }
-  }, []);
+    },
+    [refresh],
+  );
 
   return <TaskContext.Provider value={{ state, dispatch }}>{children}</TaskContext.Provider>;
 }
 
-// 🪄 6️⃣ Hook
+// 🪄 5️⃣ Hook
 export const useTaskContext = (): TaskContextType => {
   const context = useContext(TaskContext);
   if (!context) throw new Error('useTaskContext, TaskProvider içinde kullanılmalı!');

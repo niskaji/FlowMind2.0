@@ -43,13 +43,13 @@ export default function TabLayout() {
         }}
       />
 
-      {/* 🗑️ İptal Edilen */}
+      {/* 🔎 Raporlama */}
       <Tabs.Screen
         name="cancelled/index"
         options={{
-          title: "İptal Edilen",
+          title: "Raporlama",
           tabBarIcon: ({ color }) => (
-            <Ionicons name="trash-bin" size={23} color={color} />
+            <Ionicons name="search" size={23} color={color} />
           ),
         }}
       />

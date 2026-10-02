@@ -4,10 +4,21 @@
 // Görsel (View) ve stil (Style) katmanları ayrıştırıldı.
 // -----------------------------------------------------------
 
+import { FontAwesome } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef, useState } from 'react';
-import { Animated, FlatList, Keyboard, Text, TouchableWithoutFeedback, View } from 'react-native';
+import {
+  Animated,
+  FlatList,
+  Keyboard,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  Text,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 // Uygulama içi bileşenler ve modeller
@@ -46,8 +57,21 @@ export default function HomeScreen() {
   // 🔍 Filtreleme (Kısa / Orta / Uzun / Tümü)
   // ------------------------------------------------------------
   const [filter, setFilter] = useState<'all' | 'short' | 'medium' | 'long'>('all');
+  // ✅ Sadece aktif (pending) görevler bu ekranda görünür — tamamlanan/iptal
+  // edilen görevler veritabanında kalır (soft-delete), Analiz/Raporlama'da görünür
+  const visibleTasks = state.tasks.filter(t => t.status === 'pending');
   const filteredTasks =
-    filter === 'all' ? state.tasks : state.tasks.filter(t => t.category === filter);
+    filter === 'all' ? visibleTasks : visibleTasks.filter(t => t.category === filter);
+
+  // ------------------------------------------------------------
+  // ↕️ Sıralama (Yeniden Eskiye / Eskiden Yeniye) — oluşturulma tarihine göre.
+  // id'ler DB tarafından artan sırada (autoincrement) atandığı için id sırası
+  // = oluşturulma sırası; ayrı bir createdAt karşılaştırmasına gerek yok.
+  // ------------------------------------------------------------
+  const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
+  const sortedTasks = [...filteredTasks].sort((a, b) =>
+    sortOrder === 'newest' ? b.id - a.id : a.id - b.id,
+  );
 
   // ------------------------------------------------------------
   // 🧭 FlatList referansı ve Navigation event'leri
@@ -69,14 +93,44 @@ export default function HomeScreen() {
   }, [navigation]);
 
   // ------------------------------------------------------------
-  // ⬇️ Alt görev eklendiğinde ana listeyi en alta kaydır
+  // ⬆️⬇️ "Başa Dön" / "Sona Git" butonları — liste yeterince kaydırıldığında
+  // (ilgili yönde hâlâ mesafe varsa) görünür olur
   // ------------------------------------------------------------
-  const handleSubtaskAdded = () => {
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const [showScrollBottom, setShowScrollBottom] = useState(false);
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+    const distanceFromBottom = contentSize.height - contentOffset.y - layoutMeasurement.height;
+    setShowScrollTop(contentOffset.y > 150);
+    setShowScrollBottom(distanceFromBottom > 150);
+  };
+  const scrollToTop = () => {
+    flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+  };
+  const scrollToBottom = () => {
+    flatListRef.current?.scrollToEnd({ animated: true });
+  };
+
+  // ------------------------------------------------------------
+  // ↕️ Yeni eklenen öğenin göründüğü yöne otomatik kaydırma
+  // "Yeniden Eskiye" → en yeni görev listenin EN ÜSTÜNDE görünür → başa kaydır
+  // "Eskiden Yeniye" → en yeni görev listenin EN ALTINDA görünür → sona kaydır
+  // ------------------------------------------------------------
+  const scrollToNewItem = () => {
     requestAnimationFrame(() => {
       setTimeout(() => {
-        flatListRef.current?.scrollToEnd({ animated: true });
+        if (sortOrder === 'newest') {
+          flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+        } else {
+          flatListRef.current?.scrollToEnd({ animated: true });
+        }
       }, 120);
     });
+  };
+
+  // ⬇️ Alt görev eklendiğinde ana listeyi yeni öğe yönüne kaydır
+  const handleSubtaskAdded = () => {
+    scrollToNewItem();
   };
 
   // ------------------------------------------------------------
@@ -86,24 +140,14 @@ export default function HomeScreen() {
 
   // Yeni görev kaydetme işlemi
   const handleSaveTask = (data: Omit<Task, 'id' | 'subtasks' | 'status'>) => {
-    const id = Date.now().toString();
-    const newTask: Task = {
-      id,
-      title: data.title,
-      category: data.category,
-      status: 'pending',
-      subtasks: [],
-    };
-
-    // TaskContext üzerinden state'e yeni görev eklenir.
-    dispatch({ type: 'ADD_TASK', payload: newTask });
-
-    // Görev eklendikten sonra listeyi en alta kaydır.
-    requestAnimationFrame(() => {
-      setTimeout(() => {
-        flatListRef.current?.scrollToEnd({ animated: true });
-      }, 120);
+    // TaskContext üzerinden veritabanına yeni görev eklenir (id DB tarafından atanır).
+    dispatch({
+      type: 'ADD_TASK',
+      payload: { title: data.title, category: data.category, deadline: data.deadline ?? undefined },
     });
+
+    // Görev eklendikten sonra listeyi yeni öğenin göründüğü yöne kaydır.
+    scrollToNewItem();
   };
 
   // ------------------------------------------------------------
@@ -167,15 +211,46 @@ export default function HomeScreen() {
           ))}
         </View>
 
+        {/* ↕️ Sıralama Butonları */}
+        <View style={styles.sortRow}>
+          {(['newest', 'oldest'] as const).map(order => (
+            <TouchableWithoutFeedback key={order} onPress={() => setSortOrder(order)}>
+              <Animated.View
+                style={[styles.sortButton, sortOrder === order && styles.sortButtonActive]}
+              >
+                <Text style={[styles.sortText, sortOrder === order && styles.sortTextActive]}>
+                  {order === 'newest' ? 'Yeniden Eskiye' : 'Eskiden Yeniye'}
+                </Text>
+              </Animated.View>
+            </TouchableWithoutFeedback>
+          ))}
+        </View>
+
         {/* 📋 Görev Listesi */}
         <FlatList
           ref={flatListRef}
-          data={filteredTasks}
-          keyExtractor={item => item.id}
+          data={sortedTasks}
+          keyExtractor={item => String(item.id)}
           renderItem={renderItem}
           contentContainerStyle={{ paddingBottom: 60 }}
           ListEmptyComponent={<Text style={styles.empty}>Henüz görev bulunmuyor 🎯</Text>}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
         />
+
+        {/* ⬇️ Sona Git Butonu (başa dön butonunun üstünde, çakışmadan) */}
+        {showScrollBottom && (
+          <TouchableOpacity style={styles.scrollBottomButton} onPress={scrollToBottom}>
+            <FontAwesome name="arrow-down" size={18} color={Colors.white} />
+          </TouchableOpacity>
+        )}
+
+        {/* ⬆️ Başa Dön Butonu */}
+        {showScrollTop && (
+          <TouchableOpacity style={styles.scrollTopButton} onPress={scrollToTop}>
+            <FontAwesome name="arrow-up" size={18} color={Colors.white} />
+          </TouchableOpacity>
+        )}
 
         {/* 🪄 Yeni Görev Modal */}
         <NewTaskModal
